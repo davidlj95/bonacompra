@@ -15,7 +15,7 @@ import kotlin.test.assertEquals
 
 @SpringBootTest
 @AutoConfigureMockMvc
-class ItemControllerTest {
+class ItemControllerIT {
     val apiPath = "/items"
     
     @Autowired
