@@ -1,7 +1,10 @@
 package com.davidlj95.bonacompra.item
 
 interface ItemRepository {
-    fun save(item: Item): Item
-    fun findAll(): Collection<Item>
     fun deleteAll()
+    fun deleteById(id: Int)
+    fun existsById(id: Int): Boolean
+    fun findAll(): Collection<Item>
+    fun findById(id: Int): Item?
+    fun save(item: Item): Item
 }

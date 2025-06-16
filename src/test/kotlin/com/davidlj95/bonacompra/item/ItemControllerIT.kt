@@ -13,13 +13,16 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.http.MediaType
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 
 
 @SpringBootTest
 @AutoConfigureMockMvc
 class ItemControllerIT {
     val apiPath = "/items"
-    
+
     @Autowired
     private lateinit var mockMvc: MockMvc
 
@@ -38,19 +41,19 @@ class ItemControllerIT {
 
     @Test
     fun `should create an item and return it with created status`() {
+        val itemJson = objectMapper.writeValueAsString(item)
+
         mockMvc.perform(
             post(apiPath)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(ItemCreateDto(item.name)))
         )
-            .andDo {
-                val items = itemRepository.findAll()
-                assertEquals(1, items.size)
-                assertEquals(item, items.first())
-            }
-            .andExpect(jsonPath("$.id").value(item.id))
-            .andExpect(jsonPath("$.name").value(item.name))
+            .andExpect(content().json(itemJson))
             .andExpect(status().isCreated)
+
+        val items = itemRepository.findAll()
+        assertEquals(1, items.size)
+        assertEquals(item, items.first())
     }
 
     @Test
@@ -60,20 +63,83 @@ class ItemControllerIT {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(ItemCreateDto("  ")))
         )
-            .andDo {
-                val items = itemRepository.findAll()
-                assertEquals(0, items.size)
-            }
             .andExpect(status().is4xxClientError)
+
+        val items = itemRepository.findAll()
+        assertEquals(0, items.size)
     }
 
     @Test
     fun `should return list of items and ok status`() {
         val item = itemRepository.save(item);
+        val itemsJson = objectMapper.writeValueAsString(listOf(item))
 
         mockMvc.perform(get(apiPath))
-            .andExpect(jsonPath("$.[0].id").value(item.id))
-            .andExpect(jsonPath("$.[0].name").value(item.name))
+            .andExpect(content().json(itemsJson))
             .andExpect(status().isOk)
+    }
+
+    @Test
+    fun `should return 404 when getting non-existing item`() {
+        mockMvc.perform(get("$apiPath/999")).andExpect(status().isNotFound)
+    }
+
+    @Test
+    fun `should return item by id and ok status`() {
+        val itemJson = objectMapper.writeValueAsString(item)
+        itemRepository.save(item)
+
+        mockMvc.perform(get("$apiPath/${item.id}")).andExpect(content().json(itemJson))
+            .andExpect(status().isOk)
+    }
+
+    @Test
+    fun `should return 404 when updating non-existing item`() {
+        mockMvc.perform(
+            put("$apiPath/999")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(ItemUpdateDto("updated item")))
+        )
+            .andExpect(status().isNotFound)
+    }
+
+    @Test
+    fun `should update an item and return it with ok status`() {
+        val item = itemRepository.save(item);
+        val name = "updated item"
+        val updatedItemJson = objectMapper.writeValueAsString(item.copy(name = name))
+
+        mockMvc.perform(
+            put("$apiPath/${item.id}")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(ItemUpdateDto(name)))
+        )
+            .andExpect(content().json(updatedItemJson))
+            .andExpect(status().isOk)
+
+        val items = itemRepository.findAll()
+        assertEquals(1, items.size)
+        val actualItem = items.first()
+        assertEquals(name, actualItem.name)
+    }
+
+    @Test
+    fun `should return 404 when deleting non-existing item`() {
+        mockMvc.perform(
+            delete("$apiPath/999")
+        )
+            .andExpect(status().isNotFound)
+    }
+
+    @Test
+    fun `should delete an item and return no content status`() {
+        itemRepository.save(item)
+
+        mockMvc.perform(
+            delete("$apiPath/${item.id}")
+        )
+            .andExpect(status().isNoContent)
+
+        assertEquals(0, itemRepository.findAll().size)
     }
 }

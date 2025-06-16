@@ -17,8 +17,20 @@ class InMemoryItemRepository: ItemRepository {
         return items.values
     }
 
+    override fun findById(id: Int): Item? {
+        return items[id]
+    }
+
     override fun deleteAll() {
         items.clear()
         lastId = 1
+    }
+
+    override fun deleteById(id: Int) {
+        items.remove(id)
+    }
+
+    override fun existsById(id: Int): Boolean {
+        return items.contains(id)
     }
 }
