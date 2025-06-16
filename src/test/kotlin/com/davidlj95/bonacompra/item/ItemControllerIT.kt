@@ -1,5 +1,6 @@
 package com.davidlj95.bonacompra.item
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -25,6 +26,9 @@ class ItemControllerIT {
     @Autowired
     private lateinit var itemRepository: ItemRepository
 
+    @Autowired
+    private lateinit var objectMapper: ObjectMapper
+
     val item = Item(1, "item")
 
     @BeforeEach
@@ -37,7 +41,7 @@ class ItemControllerIT {
         mockMvc.perform(
             post(apiPath)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"name": "${item.name}"}""")
+                .content(objectMapper.writeValueAsString(ItemCreateDto(item.name)))
         )
             .andDo {
                 val items = itemRepository.findAll()
@@ -54,7 +58,7 @@ class ItemControllerIT {
         mockMvc.perform(
             post(apiPath)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"name": " "}""")
+                .content(objectMapper.writeValueAsString(ItemCreateDto("  ")))
         )
             .andDo {
                 val items = itemRepository.findAll()
