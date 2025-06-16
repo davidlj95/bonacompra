@@ -18,6 +18,8 @@ repositories {
 	mavenCentral()
 }
 
+val mockitoAgent = configurations.create("mockitoAgent")
+
 dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-web")
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
@@ -27,6 +29,7 @@ dependencies {
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+	mockitoAgent("org.mockito:mockito-core") { isTransitive = false }
 }
 
 kotlin {
@@ -37,4 +40,8 @@ kotlin {
 
 tasks.withType<Test> {
 	useJUnitPlatform()
+	// 👇 Solve warning about explicitly attaching a Java agent.
+	// https://javadoc.io/doc/org.mockito/mockito-core/latest/org.mockito/org/mockito/Mockito.html#0.3
+	// https://github.com/spring-io/initializr/issues/1590
+	jvmArgs("-javaagent:${mockitoAgent.asPath}")
 }
