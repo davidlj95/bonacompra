@@ -1,4 +1,9 @@
 plugins {
+	// 👇 Deprecated "StartParameter.isConfigurationCacheRequested" property comes from Kotlin's Gradle plugin
+	//    https://youtrack.jetbrains.com/issue/KT-61457/
+	//    Seems it's fixed in v2.0.0: https://github.com/JetBrains/kotlin/blob/v2.0.0/libraries/tools/kotlin-gradle-plugin/src/common/kotlin/org/jetbrains/kotlin/gradle/plugin/internal/ConfigurationCacheStartParameterAccessor.kt
+	//    Spring Boot support for Kotlin 2 will come in v4 after Spring v7 release
+	//    https://github.com/spring-projects/spring-framework/issues/33629
 	kotlin("jvm") version "1.9.25"
 	kotlin("plugin.spring") version "1.9.25"
 	id("org.springframework.boot") version "3.5.0"
