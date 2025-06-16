@@ -1,5 +1,6 @@
 package com.davidlj95.bonacompra.item
 
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -26,6 +27,11 @@ class ItemControllerIT {
 
     val item = Item(1, "item")
 
+    @BeforeEach
+    fun setUp() {
+        itemRepository.deleteAll()
+    }
+
     @Test
     fun `should create an item and return it with created status`() {
         mockMvc.perform(
@@ -41,6 +47,20 @@ class ItemControllerIT {
             .andExpect(jsonPath("$.id").value(item.id))
             .andExpect(jsonPath("$.name").value(item.name))
             .andExpect(status().isCreated)
+    }
+
+    @Test
+    fun `should not create an item if text is empty`() {
+        mockMvc.perform(
+            post(apiPath)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"name": " "}""")
+        )
+            .andDo {
+                val items = itemRepository.findAll()
+                assertEquals(0, items.size)
+            }
+            .andExpect(status().is4xxClientError)
     }
 
     @Test

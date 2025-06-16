@@ -1,5 +1,6 @@
 package com.davidlj95.bonacompra.item
 
+import jakarta.validation.Valid
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.GetMapping
@@ -17,7 +18,7 @@ class ItemController {
 
     @PostMapping("")
     @ResponseStatus(HttpStatus.CREATED)
-    fun create(@RequestBody itemCreate: ItemCreateDto): Item {
+    fun create(@RequestBody @Valid itemCreate: ItemCreateDto): Item {
         return itemRepository.save(Item(null, itemCreate.name))
     }
 

@@ -16,4 +16,9 @@ class InMemoryItemRepository: ItemRepository {
     override fun findAll(): Collection<Item> {
         return items.values
     }
+
+    override fun deleteAll() {
+        items.clear()
+        lastId = 1
+    }
 }
