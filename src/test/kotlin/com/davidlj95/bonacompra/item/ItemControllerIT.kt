@@ -10,7 +10,6 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete
@@ -32,8 +31,6 @@ class ItemControllerIT {
     @Autowired
     private lateinit var objectMapper: ObjectMapper
 
-    val item = Item(1, "item")
-
     @BeforeEach
     fun setUp() {
         itemRepository.deleteAll()
@@ -41,19 +38,24 @@ class ItemControllerIT {
 
     @Test
     fun `should create an item and return it with created status`() {
-        val itemJson = objectMapper.writeValueAsString(item)
+        val name = "item"
+        lateinit var item: Item
 
         mockMvc.perform(
             post(apiPath)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(ItemCreateDto(item.name)))
+                .content(objectMapper.writeValueAsString(ItemCreateDto(name)))
         )
-            .andExpect(content().json(itemJson))
+            .andExpect {
+                val items = itemRepository.findAll()
+                assertEquals(1, items.count())
+                item = items.first()
+                assertEquals(item.name, item.name)
+            }
+            .andExpect(content().json(objectMapper.writeValueAsString(item)))
             .andExpect(status().isCreated)
 
-        val items = itemRepository.findAll()
-        assertEquals(1, items.size)
-        assertEquals(item, items.first())
+
     }
 
     @Test
@@ -65,13 +67,12 @@ class ItemControllerIT {
         )
             .andExpect(status().is4xxClientError)
 
-        val items = itemRepository.findAll()
-        assertEquals(0, items.size)
+        assertEquals(0, itemRepository.count())
     }
 
     @Test
     fun `should return list of items and ok status`() {
-        val item = itemRepository.save(item);
+        val item = itemRepository.save(Item(name = "item"))
         val itemsJson = objectMapper.writeValueAsString(listOf(item))
 
         mockMvc.perform(get(apiPath))
@@ -86,8 +87,8 @@ class ItemControllerIT {
 
     @Test
     fun `should return item by id and ok status`() {
+        val item = itemRepository.save(Item(name = "item"))
         val itemJson = objectMapper.writeValueAsString(item)
-        itemRepository.save(item)
 
         mockMvc.perform(get("$apiPath/${item.id}")).andExpect(content().json(itemJson))
             .andExpect(status().isOk)
@@ -105,22 +106,22 @@ class ItemControllerIT {
 
     @Test
     fun `should update an item and return it with ok status`() {
-        val item = itemRepository.save(item);
+        val item = itemRepository.save(Item(name = "item"));
         val name = "updated item"
-        val updatedItemJson = objectMapper.writeValueAsString(item.copy(name = name))
+        lateinit var updatedItem: Item
 
         mockMvc.perform(
             put("$apiPath/${item.id}")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(ItemUpdateDto(name)))
-        )
-            .andExpect(content().json(updatedItemJson))
+        ).andExpect {
+            val items = itemRepository.findAll()
+            assertEquals(1, items.count())
+            updatedItem = items.first()
+            assertEquals(name, updatedItem.name)
+        }
+            .andExpect(content().json(objectMapper.writeValueAsString(updatedItem)))
             .andExpect(status().isOk)
-
-        val items = itemRepository.findAll()
-        assertEquals(1, items.size)
-        val actualItem = items.first()
-        assertEquals(name, actualItem.name)
     }
 
     @Test
@@ -133,13 +134,13 @@ class ItemControllerIT {
 
     @Test
     fun `should delete an item and return no content status`() {
-        itemRepository.save(item)
+        val item = itemRepository.save(Item(name = "item"))
 
         mockMvc.perform(
             delete("$apiPath/${item.id}")
         )
             .andExpect(status().isNoContent)
 
-        assertEquals(0, itemRepository.findAll().size)
+        assertEquals(0, itemRepository.count())
     }
 }

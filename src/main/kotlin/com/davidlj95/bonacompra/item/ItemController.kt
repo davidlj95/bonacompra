@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
+import kotlin.jvm.optionals.getOrNull
 
 @RestController
 @RequestMapping("/items")
@@ -33,13 +34,13 @@ class ItemController {
 
     @GetMapping("{id}")
     fun findById(@PathVariable id: Int): ResponseEntity<Item> {
-        val item = itemRepository.findById(id) ?: return ResponseEntity.notFound().build()
+        val item = itemRepository.findById(id).getOrNull() ?: return ResponseEntity.notFound().build()
         return ResponseEntity.ok(item)
     }
 
     @PutMapping("/{id}")
     fun update(@PathVariable id: Int, @RequestBody @Valid itemUpdate: ItemUpdateDto): ResponseEntity<Item> {
-        val existingItem = itemRepository.findById(id)
+        val existingItem = itemRepository.findById(id).getOrNull()
             ?: return ResponseEntity.notFound().build()
         existingItem.name = itemUpdate.name
         return ResponseEntity.ok(itemRepository.save(existingItem))
