@@ -1,0 +1,6 @@
+name: bonacompra
+services:
+  postgresql:
+    extends:
+      file: ./postgresql.yml
+      service: postgresql
